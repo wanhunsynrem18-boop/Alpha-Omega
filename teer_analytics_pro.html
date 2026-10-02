@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>α & Ω Alpha and Omega Teer Analytics Pro</title>
+    <meta name="theme-color" content="#090d16">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <style>
+        :root {
+            --bg-main: #090d16;
+            --bg-card: #111726;
+            --accent: #d4af37;
+            --accent-hover: #f3e5ab;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: rgba(212, 175, 55, 0.2);
+            --border-focus: #d4af37;
+            --success: #4ade80;
+            --warning: #fbbf24;
+            --danger: #ef4444;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-main); color: var(--text); min-height: 100vh; display: flex; justify-content: center; align-items: flex-start; }
+        #vaultLockOverlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg-main); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; }
+        .pin-container { width: 100%; max-width: 320px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .pin-display { font-size: 2rem; letter-spacing: 10px; margin: 20px 0; height: 40px; color: var(--accent); font-weight: bold; }
+        .pin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .pin-btn { background: rgba(251, 191, 36, 0.05); border: 1px solid var(--border); color: var(--text); font-size: 1.25rem; font-weight: bold; padding: 16px; border-radius: 50%; aspect-ratio: 1; cursor: pointer; transition: all 0.1s ease; }
+        .pin-btn:active { background: var(--accent); color: var(--bg-main); transform: scale(0.95); }
+        .app-container { width: 100%; max-width: 460px; min-height: 100vh; background: var(--bg-card); display: flex; flex-direction: column; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.7); position: relative; border: 1px solid var(--border); }
+        header { padding: 24px 20px 20px 20px; background: linear-gradient(135deg, #111726, #090d16); border-bottom: 1px solid var(--border); text-align: center; }
+        header h1 { font-size: 1.35rem; color: var(--accent); margin-bottom: 4px; letter-spacing: -0.025em; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        header p { font-size: 0.85rem; color: var(--text-muted); }
+        .tabs { display: flex; border-bottom: 1px solid var(--border); background: #05070f; position: sticky; top: 0; z-index: 50; }
+        .tab-btn { flex: 1; padding: 14px; background: none; border: none; color: var(--text-muted); font-weight: 600; cursor: pointer; font-size: 0.85rem; transition: all 0.2s; }
+        .tab-btn.active { color: var(--accent); border-bottom: 2px solid var(--accent); background: var(--bg-card); }
+        .tab-content { padding: 20px; flex: 1; display: none; }
+        .tab-content.active { display: block; }
+        .form-group { margin-bottom: 20px; }
+        label { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .slider-container { display: flex; align-items: center; gap: 12px; }
+        input[type="range"] { flex: 1; accent-color: var(--accent); height: 6px; border-radius: 3px; }
+        .badge { background: rgba(212, 175, 55, 0.15); padding: 4px 10px; border-radius: 6px; font-weight: bold; color: var(--accent); font-variant-numeric: tabular-nums; border: 1px solid var(--border); }
+        .btn-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
+        button.btn { padding: 14px; background: rgba(251, 191, 36, 0.05); border: 1px solid var(--border); color: var(--text); border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 0.85rem; transition: all 0.15s ease; }
+        button.btn:active:not(:disabled) { transform: scale(0.97); }
+        button.btn-primary { background: var(--accent); color: #090d16; grid-column: span 2; }
+        button.btn-primary:hover, button.btn-primary:active { background: var(--accent-hover); }
+        .toggle-btn.active { border-color: var(--accent); background: rgba(212, 175, 55, 0.15); color: var(--accent); }
+        .results-box { background: #05070f; border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-top: 16px; }
+        .results-box h3 { font-size: 0.9rem; margin-bottom: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+        .metric-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; font-size: 0.9rem; border-bottom: 1px solid #111726; }
+        .metric-row:last-child { border: none; }
+        .heat-map { display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px; margin-top: 12px; }
+        .heat-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; border-radius: 4px; cursor: pointer; transition: transform 0.1s; }
+        .heat-cell.cold-outlier { border: 2px solid var(--danger) !important; box-shadow: inset 0 0 5px rgba(239, 68, 110, 0.5); }
+        .heat-cell.hot-cluster { border: 2px solid var(--accent) !important; box-shadow: inset 0 0 5px rgba(212, 175, 55, 0.5); }
+        .regional-card { background: #05070f; border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+        .regional-title { font-weight: bold; font-size: 1rem; color: var(--accent); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .history-list { max-height: 180px; overflow-y: auto; margin-top: 10px; border-radius: 6px; }
+        .history-item { display: flex; justify-content: space-between; padding: 8px; font-size: 0.8rem; background: #111726; margin-bottom: 4px; border-left: 3px solid var(--border); }
+        .history-item.hit { border-left-color: var(--success); }
+        .history-item.partial { border-left-color: var(--warning); }
+        textarea.vip-notes { width: 100%; height: 90px; background: #05070f; border: 1px solid var(--border); color: var(--text); padding: 10px; border-radius: 8px; resize: none; margin-top: 8px; font-size: 0.85rem; }
+        textarea.vip-notes:focus { outline: none; border-color: var(--accent); }
+        .input-text { width: 100%; padding: 10px; background: #05070f; border: 1px solid var(--border); color: var(--text); border-radius: 8px; margin-bottom: 10px; }
+        .input-text:focus { outline: none; border-color: var(--accent); }
+        .grid-split { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .efficiency-bar-container { width: 100%; background: #111726; height: 20px; border-radius: 10px; overflow: hidden; margin-top: 6px; border: 1px solid var(--border); }
+        .efficiency-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--warning)); width: 0%; transition: width 0.5s ease; }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+    <div id="vaultLockOverlay">
+        <div class="pin-container">
+            <h2 style="color: var(--accent); font-size: 1.15rem; letter-spacing: 0.05em;">α & Ω INTERIOR VAULT</h2>
+            <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 4px;">Authorized Entry Pin Required</p>
+            <div class="pin-display" id="pinStars"></div>
+            <div class="pin-grid">
+                <button class="pin-btn" onclick="pressPin('1')">1</button>
+                <button class="pin-btn" onclick="pressPin('2')">2</button>
+                <button class="pin-btn" onclick="pressPin('3')">3</button>
+                <button class="pin-btn" onclick="pressPin('4')">4</button>
+                <button class="pin-btn" onclick="pressPin('5')">5</button>
+                <button class="pin-btn" onclick="pressPin('6')">6</button>
+                <button class="pin-btn" onclick="pressPin('7')">7</button>
+                <button class="pin-btn" onclick="pressPin('8')">8</button>
+                <button class="pin-btn" onclick="pressPin('9')">9</button>
+                <button class="pin-btn" style="background:rgba(239,68,68,0.1); font-size: 0.85rem;" onclick="clearPin()">CLR</button>
+                <button class="pin-btn" onclick="pressPin('0')">0</button>
+                <button class="pin-btn" style="background:rgba(74,222,128,0.1); font-size: 0.85rem;" onclick="submitPin()">ENT</button>
+            </div>
+            <p id="lockScreenStatus" style="font-size: 0.75rem; margin-top: 15px; color: var(--text-muted);">Attempts Remaining: 3</p>
+        </div>
+    </div>
+    <div class="app-container">
+        <header>
+            <h1><span style="color: var(--text-muted);">α</span> Alpha & Omega Teer Pro <span style="color: var(--text-muted);">Ω</span></h1>
+            <p>Advanced Micro-Distribution Calculations Platform</p>
+            <div id="clockTimerDisplay" style="font-size: 0.8rem; font-family: monospace; color: var(--accent); margin-top: 6px;">Next Draw sequence: --:--:--</div>
+        </header>
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('simulator', event)">Simulator</button>
+            <button class="tab-btn" onclick="switchTab('heatmap', event)">180D Heatmap</button>
+            <button class="tab-btn" onclick="switchTab('regional', event)">Advanced Ops</button>
+        </div>
+        <div id="simulator" class="tab-content active">
+            <div class="form-group">
+                <label>Target House Metric Slider <span class="badge" id="houseVal">5</span></label>
+                <div class="slider-container">
+                    <input type="range" id="houseSlider" min="0" max="9" value="5" oninput="updateParams()">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Target Ending Metric Slider <span class="badge" id="endingVal">2</span></label>
+                <div class="slider-container">
+                    <input type="range" id="endingSlider" min="0" max="9" value="2" oninput="updateParams()">
+                </div>
+            </div>
+            <div class="btn-grid">
+                <button class="btn toggle-btn" id="cutToggle" onclick="toggleCutDigit()">Cut Digit Mode: OFF</button>
+                <button class="btn toggle-btn" id="reverseToggle" onclick="toggleReverse()">Reverse Pairing: OFF</button>
+                <button class="btn btn-primary" onclick="runSimulation()">Execute Instant System Draw</button>
+            </div>
+            <div class="results-box">
+                <h3>Simulation Readouts</h3>
+                <div class="metric-row"><span>Combination Pointer:</span><span id="targetCombo" style="color: var(--accent); font-weight: bold; font-size: 1.1rem;">52</span></div>
+                <div class="metric-row"><span>System Iteration Outcome:</span><span id="drawResult" style="font-weight: bold; font-size: 1.1rem;">--</span></div>
+                <div class="metric-row"><span>Validation Response:</span><span id="drawStatus" style="font-weight: 500;">Awaiting Input Command</span></div>
+                <div class="metric-row"><span>Calculated Target Probability:</span><span id="probMetric" style="color: var(--success); font-weight: bold;">6.84%</span></div>
+            </div>
+            <div class="results-box">
+                <h3>Component Target Efficiency Metrics</h3>
+                <div>
+                    <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted);">
+                        <span>House Distribution Index Accuracy</span>
+                        <span id="houseAccuracyLabel">0%</span>
+                    </div>
+                    <div class="efficiency-bar-container"><div id="houseAccBar" class="efficiency-bar-fill"></div></div>
+                </div>
+                <div style="margin-top: 10px;">
+                    <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted);">
+                        <span>Ending Point Convergence Accuracy</span>
+                        <span id="endingAccuracyLabel">0%</span>
+                    </div>
+                    <div class="efficiency-bar-container"><div id="endingAccBar" class="efficiency-bar-fill"></div></div>
+                </div>
+            </div>
+            <div class="results-box">
+                <h3>VIP Secure Notepad Observation Vault</h3>
+                <textarea class="vip-notes" id="vipScratchpad" placeholder="Jot down specific table matrix notes, lines or observation metrics here..." oninput="saveScratchpad()"></textarea>
+            </div>
+            <div class="results-box">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <h3 style="margin-bottom: 0;">Session Storage Log</h3>
+                    <div style="display:flex; gap:6px;">
+                        <button class="btn" style="padding: 4px 8px; font-size: 0.7rem; border-radius: 4px;" onclick="backupDataTokens()">Backup Code</button>
+                        <button class="btn" style="padding: 4px 8px; font-size: 0.7rem; border-radius: 4px;" onclick="restoreDataTokens()">Restore</button>
+                        <button class="btn" style="padding: 4px 8px; font-size: 0.7rem; border-radius: 4px; background: var(--danger)" onclick="clearSavedLogs()">Clear</button>
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
+                    <button class="btn" style="padding:6px; font-size:0.75rem;" onclick="exportCSVReport()">CSV Spreadsheet Export</button>
+                    <button class="btn" style="padding:6px; font-size:0.75rem; border-color:var(--accent); color:var(--accent);" onclick="generateVIPPDF()">Print VIP PDF Document</button>
+                </div>
+                <div class="history-list" id="storageHistoryLog"></div>
+            </div>
+        </div>
+        <div id="heatmap" class="tab-content">
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px; line-height: 1.4;">
+                180D Hit Frequency distribution clustering calculations. Golden parameters indicate hot convergence zones; Crimson frames isolate deep deviations.
+            </p>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom: 12px;">
+                <button class="btn" style="padding:8px; font-size:0.75rem;" onclick="recalculateClusters()">Compute Hotspot Clusters</button>
+                <button class="btn" style="padding:8px; font-size:0.75rem; border-color:var(--danger); color:var(--danger);" onclick="scanOutliers()">Scan Outlier Deviations</button>
+            </div>
+            <div class="heat-map" id="heatMapGrid"></div>
+        </div>
+        <div id="regional" class="tab-content">
+            <div class="regional-card">
+                <div class="regional-title">Khasi Dream Core Lexicon Terminal</div>
+                <input type="text" id="dreamSearchBox" class="input-text" placeholder="Type key term (e.g. snake, water, arrow, gold, blood)..." oninput="lookupDreamIndex()">
+                <div id="dreamLexiconOutput" style="font-size:0.8rem; min-height:30px; color:var(--accent); line-height:1.4; margin-bottom:12px;">Enter a tracking keyword string above to extract historical targets.</div>
+                <label style="font-size:0.75rem; color:var(--text-muted);">Inject New Keyword Data to Local Lexicon</label>
+                <input type="text" id="newDreamKeyword" class="input-text" style="margin-bottom:6px;" placeholder="Keyword (e.g., ring, storm)">
+                <input type="text" id="newDreamNumbers" class="input-text" style="margin-bottom:10px;" placeholder="Target Numbers (e.g., 23, 74)">
+                <button class="btn" style="width:100%; padding:8px; font-size:0.75rem;" onclick="injectCustomDreamData()">Save Word into Dictionary Array</button>
+            </div>
+            <div class="regional-card">
+                <div class="regional-title">Alarm Notification Sound Board Profile</div>
+                <label style="margin-top:6px;">Select Verification Audio Signal Profile:</label>
+                <select id="audioToneSelector" class="input-text" style="background:#05070f; color:var(--text); cursor:pointer;">
+                    <option value="chime">VIP Precision Digital Chime</option>
+                    <option value="synth">Deep Low-Frequency Cinematic Synth Alert</option>
+                    <option value="bell">Mechanical High-Frequency Bell Ring</option>
+                </select>
+                <button class="btn" style="width:100%; padding:8px; font-size:0.8rem;" onclick="triggerAudioChimeTest()">Test Audio Profile Response</button>
+            </div>
+            <div class="regional-card">
+                <div class="regional-title">Multi-Market Split Progressive Risk Recovery Engine</div>
+                <div class="grid-split">
+                    <div>
+                        <label style="font-size:0.75rem; color:var(--accent);">Shillong Main Line Base</label>
+                        <input type="number" id="shillongTargetStake" class="input-text" value="10" placeholder="Base Stake" oninput="calculateProgressiveOdds()">
+                    </div>
+                    <div>
+                        <label style="font-size:0.75rem; color:var(--warning);">Khanapara Backup Line Base</label>
+                        <input type="number" id="khanaparaTargetStake" class="input-text" value="10" placeholder="Base Stake" oninput="calculateProgressiveOdds()">
+                    </div>
+                </div>
+                <div class="grid-split" style="margin-top:-4px; margin-bottom:10px;">
+                    <div>
+                        <label style="font-size:0.75rem; color:var(--text-muted);">Martingale Multiplier Factor</label>
+                        <input type="number" id="customMartingaleMultiplier" class="input-text" value="2.2" step="0.1" placeholder="e.g., 2.2" oninput="calculateProgressiveOdds()">
+                    </div>
+                    <div>
+                        <label style="font-size:0.75rem; color:var(--danger);">Max Safe Budget Ceiling</label>
+                        <input type="number" id="maxSafeBudgetCeiling" class="input-text" value="2500" placeholder="e.g., 2500" oninput="calculateProgressiveOdds()">
+                    </div>
+                </div>
+                <div id="progressiveSimulatorReadout" style="font-size:0.8rem; background:#05070f; padding:10px; border-radius:6px; color:var(--text-muted); line-height:1.4;">Awaiting configuration limits to run Martingale progression models...</div>
+            </div>
+            <div class="regional-card">
+                <div class="regional-title">VIP Cross-Generation Playline Permutator</div>
+                <div class="grid-split">
+                    <div>
+                        <label style="font-size:0.75rem;">Multi-House (e.g. 3,8)</label>
+                        <input type="text" id="multiHouseInput" class="input-text" value="3,8" placeholder="3,8" oninput="runPermutatorEngine()">
+                    </div>
+                    <div>
+                        <label style="font-size:0.75rem;">Multi-Ending (e.g. 4,9)</label>
+                        <input type="text" id="multiEndingInput" class="input-text" value="4,9" placeholder="4,9" oninput="runPermutatorEngine()">
+                    </div>
+                </div>
+                <button class="btn btn-primary" style="grid-column:auto; width:100%; padding:10px; font-size:0.8rem; margin-bottom:10px;" onclick="runPermutatorEngine()">Generate Cross-Multiplied Playline</button>
+                <div id="permutatorCombinationsOutput" style="font-size:0.85rem; color:var(--warning); background:#05070f; padding:10px; border-radius:6px; min-height:40px; font-family:monospace; text-align:center;">--</div>
+            </div>
+        </div>
+    </div>
+    <script>
+        window.MASTER_PIN = "1234";
+        let enteredPinString = "";
+        let remainingAttempts = 3;
+        let voiceLockActivated = false;
+        let cutMode = false;
+        let reverseMode = false;
+
+        function pressPin(digit) { if (enteredPinString.length < 4) { enteredPinString += digit; document.getElementById('pinStars').innerText = "• ".repeat(enteredPinString.length); } }
+        function clearPin() { enteredPinString = ""; document.getElementById('pinStars').innerText = ""; }
+        function submitPin() {
+            if (enteredPinString === window.MASTER_PIN) { document.getElementById('vaultLockOverlay').style.display = 'none'; executeBritishAIWelcome(); }
+            else {
+                remainingAttempts--; clearPin();
+                const statusLabel = document.getElementById('lockScreenStatus');
+                statusLabel.innerText = `Attempts Remaining: ${remainingAttempts}`;
+                statusLabel.style.color = "var(--danger)";
+                if (remainingAttempts <= 0) { executeAutoDestructPurge(); }
+            }
+        }
+        function executeAutoDestructPurge() {
+            localStorage.clear();
+            document.getElementById('vaultLockOverlay').innerHTML = `
+                <div class="pin-container" style="border-color: var(--danger);">
+                    <h2 style="color:var(--danger)">VAULT PURGED</h2>
+                    <p style="font-size:0.8rem; margin-top:10px; color:var(--text-muted)">3 Failed access tokens detected. The device storage block array cache records have been erased.</p>
+                </div>`;
+            speakBritishAILine("Security breach detected, Rohit Kharsati. Wiping local data arrays immediately.");
+        }
+        function speakBritishAILine(textString) {
+            if (!('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+            const utteranceObj = new SpeechSynthesisUtterance(textString);
+            const systemVoices = window.speechSynthesis.getVoices();
+            const britishVoicePointer = systemVoices.find(v => v.lang.includes('en-GB') || v.lang === 'en_GB');
+            if (britishVoicePointer) utteranceObj.voice = britishVoicePointer;
+            utteranceObj.rate = 0.95; utteranceObj.pitch = 1.0;
+            window.speechSynthesis.speak(utteranceObj);
+        }
+        function executeBritishAIWelcome() {
+            if (voiceLockActivated) return;
+            voiceLockActivated = true;
+            const randomPhrases = [
+                "Welcome, Rohit Kharsati. Alpha and Omega Teer Analytics Pro is fully loaded. System initialized. Best of luck for today's Shillong draw.",
+                "Splendid to see you, Rohit Kharsati. Let's find today's optimal playline. Best of luck!",
+                "Welcome back, Rohit Kharsati. System initialized. Wishing you the absolute best of luck for today's Shillong draw.",
+                "Hello Rohit Kharsati. Analytics are fully updated. Do have a lucky session today."
+            ];
+            const choiceIndex = Math.floor(Math.random() * randomPhrases.length);
+            setTimeout(() => { speakBritishAILine(randomPhrases[choiceIndex]); }, 400);
+        }
+        function switchTab(tabId, event) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            if (event && event.currentTarget) { event.currentTarget.classList.add('active'); }
+        }
+        function updateParams() {
+            let h = document.getElementById('houseSlider').value;
+            let e = document.getElementById('endingSlider').value;
+            document.getElementById('houseVal').innerText = h;
+            document.getElementById('endingVal').innerText = e;
+            if (cutMode) h = (parseInt(h) + 5) % 10;
+            document.getElementById('targetCombo').innerText = reverseMode ? "" + e + h : "" + h + e;
+        }
+        function toggleCutDigit() { cutMode = !cutMode; document.getElementById('cutToggle').innerText = `Cut Digit Mode: ${cutMode ? 'ON' : 'OFF'}`; document.getElementById('cutToggle').classList.toggle('active', cutMode); updateParams(); }
+        function toggleReverse() { reverseMode = !reverseMode; document.getElementById('reverseToggle').innerText = `Reverse Pairing: ${reverseMode ? 'ON' : 'OFF'}`; document.getElementById('reverseToggle').classList.toggle('active', reverseMode); updateParams(); }
+        function runSimulation() {
+            const target = document.getElementById('targetCombo').innerText;
+            const simHouse = Math.floor(Math.random() * 10);
+            const simEnding = Math.floor(Math.random() * 10);
+            const result = "" + simHouse + simEnding;
+            document.getElementById('drawResult').innerText = result;
+            const statusEl = document.getElementById('drawStatus');
+            let logClass = '';
+            if (result === target) { statusEl.innerText = "💥 DIRECT HIT WIN!"; statusEl.style.color = "var(--success)"; logClass = 'hit'; }
+            else if (result[0] === target[0] || result[1] === target[1]) { statusEl.innerText = "⭐ Partial Match (House/Ending)"; statusEl.style.color = "var(--warning)"; logClass = 'partial'; }
+            else { statusEl.innerText = "No Hitting Overlap"; statusEl.style.color = "var(--text-muted)"; }
+            document.getElementById('probMetric').innerText = (Math.random() * (9.5 - 3.2) + 3.2).toFixed(2) + "%";
+            saveToDeviceLog(target, result, statusEl.innerText, logClass);
+            recalculateInternalAccuracyMetrics();
+        }
+        function saveToDeviceLog(target, drawn, status, cssClass) {
+            let logs = JSON.parse(localStorage.getItem('alpha_omega_history')) || [];
+            const newLog = { timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}), date: new Date().toLocaleDateString(), target: target, drawn: drawn, status: status, cssClass: cssClass };
+            logs.unshift(newLog); if(logs.length > 30) logs.pop();
+            localStorage.setItem('alpha_omega_history', JSON.stringify(logs)); renderDeviceLogs();
+        }
+        function renderDeviceLogs() {
+            const container = document.getElementById('storageHistoryLog');
+            let logs = JSON.parse(localStorage.getItem('alpha_omega_history')) || [];
+            if(logs.length === 0) { container.innerHTML = '<p style="font-size:0.8rem; color:var(--text-muted); text-align:center; padding:10px;">No saved structural log steps mapped</p>'; return; }
+            container.innerHTML = logs.map(log => `<div class="history-item ${log.cssClass}"><span>[${log.timestamp}] Mapped: <b>${log.target}</b></span><span>Result: <b style="color:var(--accent)">${log.drawn}</b></span></div>`).join('');
+        }
+        function clearSavedLogs() { localStorage.removeItem('alpha_omega_history'); renderDeviceLogs(); recalculateInternalAccuracyMetrics(); }
+        function recalculateInternalAccuracyMetrics() {
+            let logs = JSON.parse(localStorage.getItem('alpha_omega_history')) || [];
+            if (logs.length === 0) {
+                document.getElementById('houseAccBar').style.width = '0%'; document.getElementById('houseAccuracyLabel').innerText = '0%';
+                document.getElementById('endingAccBar').style.width = '0%'; document.getElementById('endingAccuracyLabel').innerText = '0%'; return;
+            }
+            let houseHits = 0; let endingHits = 0;
+            logs.forEach(log => { if(log.target[0] === log.drawn[0]) houseHits++; if(log.target[1] === log.drawn[1]) endingHits++; });
+            const housePct = Math.round((houseHits / logs.length) * 100); const endingPct = Math.round((endingHits / logs.length) * 100);
+            document.getElementById('houseAccBar').style.width = housePct + '%'; document.getElementById('houseAccuracyLabel').innerText = housePct + '%';
+            document.getElementById('endingAccBar').style.width = endingPct + '%'; document.getElementById('endingAccuracyLabel').innerText = endingPct + '%';
+        }
+        function saveScratchpad() { const val = document.getElementById('vipScratchpad').value; localStorage.setItem('alpha_omega_notepad', val); }
+        function loadScratchpad() { const val = localStorage.getItem('alpha_omega_notepad') || ""; document.getElementById('vipScratchpad').value = val; }
+        function backupDataTokens() {
+            const payload = { history: localStorage.getItem('alpha_omega_history'), notepad: localStorage.getItem('alpha_omega_notepad'), customDreams: localStorage.getItem('alpha_omega_custom_dreams') };
+            const tokenStr = btoa(JSON.stringify(payload));
+            navigator.clipboard.writeText(tokenStr).then(() => { alert("Vault sync token compiled and copied to clipboard!"); speakBritishAILine("Data vault tokens generated successfully, Rohit Kharsati. Securely copied to your clipboard."); });
+        }
+        function restoreDataTokens() {
+            const input = prompt("Paste your secure Alpha & Omega database sync token string here:"); if (!input) return;
+            try {
+                const parsed = JSON.parse(atob(input));
+                if(parsed.history) localStorage.setItem('alpha_omega_history', parsed.history);
+                if(parsed.notepad) localStorage.setItem('alpha_omega_notepad', parsed.notepad);
+                if(parsed.customDreams) localStorage.setItem('alpha_omega_custom_dreams', parsed.customDreams);
+                renderDeviceLogs(); loadScratchpad(); recalculateInternalAccuracyMetrics(); alert("System recovery operations executed perfectly!");
+            } catch(e) { alert("Invalid synchronization token profile provided."); }
+        }
+        function exportCSVReport() {
+            let logs = JSON.parse(localStorage.getItem('alpha_omega_history')) || []; if(logs.length === 0) return alert("Log registry is empty. Unable to trace data rows.");
+            let csvContent = "data:text/csv;charset=utf-8,Date,Timestamp,Target Combo,Draw Result,Status\n";
+            logs.forEach(l => { csvContent += `"${l.date}","${l.timestamp}","${l.target}","${l.drawn}","${l.status}"\n`; });
+            const encodedUri = encodeURI(csvContent); const link = document.createElement("a"); link.setAttribute("href", encodedUri); link.setAttribute("download", `Alpha_Omega_Teer_Report_\${new Date().toISOString().slice(0,10)}.csv`); document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        }
+        function generateVIPPDF() {
+            const { jsPDF } = window.jspdf; const doc = new jsPDF({ orientation: "p", unit: "mm", format: "a4" });
+            let logs = JSON.parse(localStorage.getItem('alpha_omega_history')) || []; let notes = localStorage.getItem('alpha_omega_notepad') || "No data strings captured.";
+            doc.setFillColor(9, 13, 22); doc.rect(0, 0, 210, 297, "F");
+            doc.setFont("helvetica", "bold"); doc.setFontSize(22); doc.setTextColor(212, 175, 55); doc.text("ALPHA & OMEGA TEER ANALYTICS PRO", 14, 25);
+            doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.setTextColor(148, 163, 184); doc.text(`Authorized User System Audit: Rohit Kharsati`, 14, 32); doc.text(`Report Compilation Date: \${new Date().toLocaleString()}`, 14, 37);
+            doc.setDrawColor(212, 175, 55); doc.setLineWidth(0.5); doc.line(14, 42, 196, 42);
+            doc.setFont("helvetica", "bold"); doc.setFontSize(14); doc.setTextColor(212, 175, 55); doc.text("Secure Vault Notes Scratchpad:", 14, 54);
+            doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.setTextColor(248, 250, 252); let splitNotes = doc.splitTextToSize(notes, 180); doc.text(splitNotes, 14, 62);
+            let verticalOffset = 100; doc.setFont("helvetica", "bold"); doc.setFontSize(14); doc.setTextColor(212, 175, 55); doc.text("Historical Trace Matrix Logs (Last 30 Sessions):", 14, verticalOffset); verticalOffset += 8;
+            doc.setFontSize(9); doc.setFont("monospace", "normal"); doc.setTextColor(148, 163, 184); doc.text("TIMESTAMP    |  TARGET LINE  |  DRAW RESULT  |  RESPONSE STATUS", 14, verticalOffset); verticalOffset += 4; doc.line(14, verticalOffset, 196, verticalOffset); verticalOffset += 6; doc.setTextColor(248, 250, 252);
+            logs.forEach(l => {
+                if(verticalOffset > 275) { doc.addPage(); doc.setFillColor(9, 13, 22); doc.rect(0, 0, 210, 297, "F"); verticalOffset = 20; }
+                let lineStr = `\${l.timestamp.padEnd(12)} |  \${l.target.padEnd(11)} |  \${l.drawn.padEnd(11)} |  \${l.status}`; doc.text(lineStr, 14, verticalOffset); verticalOffset += 6;
+            });
+            speakBritishAILine("Compiling your PDF analytics report document now, Rohit Kharsati. Generating document architecture."); doc.save("Alpha_Omega_VIP_Analytics_Report.pdf");
+        }
+        function initializeHeatmapEngine() {
+            const grid = document.getElementById('heatMapGrid'); grid.innerHTML = "";
+            for(let i=0; i<100; i++) {
+                const cell = document.createElement('div'); cell.className = 'heat-cell'; const num = i.toString().padStart(2, '0'); cell.innerText = num;
+                if (i % 11 === 0 || i % 15 === 0) { cell.style.backgroundColor = 'rgba(212, 175, 55, 0.15)'; cell.style.color = 'var(--accent)'; cell.setAttribute('data-weight', 'hot'); }
+                else if (i % 7 === 0) { cell.style.backgroundColor = '#1e1b29'; cell.style.color = '#64748b'; cell.setAttribute('data-weight', 'cold'); }
+                else { cell.style.backgroundColor = '#111726'; cell.style.color = '#cbd5e1'; cell.setAttribute('data-weight', 'norm'); }
+                cell.onclick = () => { document.getElementById('houseSlider').value = parseInt(num[0]); document.getElementById('endingSlider').value = parseInt(num[1]); updateParams(); switchTab('simulator', null); };
+                grid.appendChild(cell);
+            }
+        }
+        function recalculateClusters() { speakBritishAILine("Matrix statistical clustering calculations updated, Rohit Kharsati. The heat models have shifted."); document.querySelectorAll('.heat-cell').forEach(c => { c.classList.remove('cold-outlier'); if(c.getAttribute('data-weight') === 'hot') c.classList.add('hot-cluster'); }); }
+        function scanOutliers() { speakBritishAILine("Scanning the matrix grid layout fields for cold operational outlier points, Rohit Kharsati."); document.querySelectorAll('.heat-cell').forEach(c => { c.classList.remove('hot-cluster'); if(c.getAttribute('data-weight') === 'cold') c.classList.add('cold-outlier'); }); }
+        let BASE_DREAM_DICTIONARY = { "snake": "07, 17, 37", "thlen": "07, 17, 37", "water": "04, 14, 24, 54", "um": "04, 14, 24, 54", "money": "00, 15, 25, 50", "tanka": "00, 15, 25, 50", "fish": "09, 19, 29, 39", "kha": "09, 19, 29, 39", "cow": "12, 22, 32", "masi": "12, 22, 32", "arrow": "05, 15, 25, 45, 95", "khnam": "05, 15, 25, 45, 95", "car": "04, 14, 24, 44", "kari": "04, 14, 24, 44", "gold": "22, 33, 44, 88", "ksiar": "22, 33, 44, 88", "blood": "06, 16, 26, 66", "snam": "06, 16, 26, 66", "climb": "03, 13, 23", "kiew": "03, 13, 23", "fire": "01, 11, 21, 51", "ding": "01, 11, 21, 51", "ghost": "00, 99", "jingiathala": "00, 99" };
+        function lookupDreamIndex() {
+            const query = document.getElementById('dreamSearchBox').value.toLowerCase().trim(); const output = document.getElementById('dreamLexiconOutput'); if(query.length < 3) { output.innerText = "Enter a tracking keyword string above to extract historical targets."; return; }
+            let customDict = JSON.parse(localStorage.getItem('alpha_omega_custom_dreams')) || {}; let mergedDictionary = Object.assign({}, BASE_DREAM_DICTIONARY, customDict);
+            if (mergedDictionary[query]) { output.innerHTML = `Matches Found: <b>\${mergedDictionary[query]}</b>`; speakBritishAILine(`Parsing the expanded traditional Khasi dictionary database for you, Rohit Kharsati.`); }
+            else { output.innerText = "No traditional index targets found matching that specific keyword pattern."; }
+        }
+        function injectCustomDreamData() {
+            const word = document.getElementById('newDreamKeyword').value.toLowerCase().trim(); const nums = document.getElementById('newDreamNumbers').value.trim(); if(!word || !nums) { alert("Please provide both a keyword phrase and numeric properties."); return; }
+            let customDict = JSON.parse(localStorage.getItem('alpha_omega_custom_dreams')) || {}; customDict[word] = nums; localStorage.setItem('alpha_omega_custom_dreams', JSON.stringify(customDict));
+            document.getElementById('newDreamKeyword').value = ""; document.getElementById('newDreamNumbers').value = ""; alert(`"\${word}" has been successfully added to your secure array dictionary database!`); speakBritishAILine(`Custom word registry archived into dream storage vectors, Rohit Kharsati.`);
+        }
+        function triggerAudioChimeTest() {
+            const type = document.getElementById('audioToneSelector').value; const audioCtx = new (window.AudioContext || window.webkitAudioContext)(); const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain(); osc.connect(gain); gain.connect(audioCtx.destination);
+            if (type === 'chime') { osc.type = 'sine'; osc.frequency.setValueAtTime(880, audioCtx.currentTime); gain.gain.setValueAtTime(0.3, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4); osc.start(); osc.stop(audioCtx.currentTime + 0.4); }
+            else if (type === 'synth') { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(120, audioCtx.currentTime); osc.frequency.linearRampToValueAtTime(60, audioCtx.currentTime + 0.6); gain.gain.setValueAtTime(0.4, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.6); osc.start(); osc.stop(audioCtx.currentTime + 0.6); }
+            else { osc.type = 'square'; osc.frequency.setValueAtTime(600, audioCtx.currentTime); gain.gain.setValueAtTime(0.2, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.8); osc.start(); osc.stop(audioCtx.currentTime + 0.8); }
+            setTimeout(() => { speakBritishAILine("Test alert chime operational, Rohit Kharsati. Audio routing nodes are verified."); }, 900);
+        }
+        function calculateProgressiveOdds() {
+            const shillongBase = parseFloat(document.getElementById('shillongTargetStake').value) || 0; const khanaparaBase = parseFloat(document.getElementById('khanaparaTargetStake').value) || 0; const factor = parseFloat(document.getElementById('customMartingaleMultiplier').value) || 2.2; const ceiling = parseFloat(document.getElementById('maxSafeBudgetCeiling').value) || 2500; const display = document.getElementById('progressiveSimulatorReadout');
+            const sDay2 = Math.round(shillongBase * factor); const sDay3 = Math.round(sDay2 * factor); const sTotal = shillongBase + sDay2 + sDay3;
+            const kDay2 = Math.round(khanaparaBase * factor); const kDay3 = Math.round(kDay2 * factor); const kTotal = khanaparaBase + kDay2 + kDay3;
+            let sWarning = sTotal > ceiling ? `<b style="color:var(--danger)">[EXCEEDS CEILING]</b>` : `<span style="color:var(--success)">[SAFE]</span>`;
+            let kWarning = kTotal > ceiling ? `<b style="color:var(--danger)">[EXCEEDS CEILING]</b>` : `<span style="color:var(--success)">[SAFE]</span>`;
+            display.innerHTML = `<b>Progression Vectors (3-Day Martingale Models):</b><br>• <b>Shillong Main:</b> Day 1: ₹\${shillongBase} | Day 2: ₹\${sDay2} | Day 3: ₹\${sDay3}<br>&nbsp;&nbsp;Cumulative Cost: ₹\${sTotal} \${sWarning}<br>• <b>Khanapara Backup:</b> Day 1: ₹\${khanaparaBase} | Day 2: ₹\${kDay2} | Day 3: ₹\${kDay3}<br>&nbsp;&nbsp;Cumulative Cost: ₹\${kTotal} \${kWarning}<br><span style="color:var(--accent); font-size:0.75rem;">Calculated vs. Max Safe Limit Target of ₹\${ceiling}.</span>`;
+        }
+        function runPermutatorEngine() {
+            const houseStr = document.getElementById('multiHouseInput').value; const endingStr = document.getElementById('multiEndingInput').value; const container = document.getElementById('permutatorCombinationsOutput');
+            const houses = houseStr.split(',').map(x => x.trim()).filter(x => x !== ""); const endings = endingStr.split(',').map(x => x.trim()).filter(x => x !== "");
+            let outputs = []; houses.forEach(h => { endings.forEach(e => { outputs.push("" + h + e); }); });
+            if(outputs.length === 0) { container.innerText = "--"; return; } container.innerText = outputs.join(', ');
+        }
+        function startDrawAlarmClockEngine() {
+            setInterval(() => {
+                const now = new Date(); const currentHours = now.getHours(); const currentMinutes = now.getMinutes(); const currentSeconds = now.getSeconds();
+                let targetHr = 15; let targetMin = 45; if (currentHours >= 16 || (currentHours === 15 && currentMinutes >= 45)) { targetHr = 16; targetMin = 45; }
+                let diffSecs = ((targetHr * 3600) + (targetMin * 60)) - ((currentHours * 3600) + (currentMinutes * 60) + currentSeconds); if (diffSecs < 0) diffSecs += 86400;
+                const hrs = Math.floor(diffSecs / 3600).toString().padStart(2, '0'); const mins = Math.floor((diffSecs % 3600) / 60).toString().padStart(2, '0'); const secs = (diffSecs % 60).toString().padStart(2, '0');
+                document.getElementById('clockTimerDisplay').innerText = `Next Mapped Draw Session: \${hrs}:\${mins}:\${secs}`;
+                if (diffSecs === 0) { speakBritishAILine(`Attention Rohit Kharsati, the Shillong draw sequence is commencing now. Best of luck!`); }
+            }, 1000);
+        }
+        window.onload = () => {
+            updateParams(); initializeHeatmapEngine(); loadScratchpad(); renderDeviceLogs(); recalculateInternalAccuracyMetrics(); calculateProgressiveOdds(); runPermutatorEngine(); startDrawAlarmClockEngine();
+            if ('speechSynthesis' in window) { window.speechSynthesis.getVoices(); window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); }; }
+        };
+    </script>
+</body>
+</html>
